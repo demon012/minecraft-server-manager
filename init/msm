@@ -147,19 +147,19 @@ echo_if() {
 error_exit() {
 	case "$1" in
 		INVALID_USER) code=64;;
-		INVALID_COMMAND) code=65;;
-		INVALID_ARGUMENT) code=66;;
+	INVALID_COMMAND) code=65;;
+INVALID_ARGUMENT) code=66;;
 		SERVER_STOPPED) code=67;;
-		SERVER_RUNNING) code=68;;
-		NAME_NOT_FOUND) code=69;;
+	SERVER_RUNNING) code=68;;
+NAME_NOT_FOUND) code=69;;
 		FILE_NOT_FOUND) code=70;;
-		DUPLICATE_NAME) code=71;;
-		LOGS_NOT_ROLLED) code=72;;
+	DUPLICATE_NAME) code=71;;
+LOGS_NOT_ROLLED) code=72;;
 		CONF_ERROR) code=73;;
-		FATAL_ERROR) code=74;;
-		JAVA_NOT_INSTALLED) code=75;;
+	FATAL_ERROR) code=74;;
+JAVA_NOT_INSTALLED) code=75;;
 	esac
-	
+
 	echo "${2:-"Unknown Error"}" 1>&2
 	exit "${code:-$1}"
 }
@@ -244,7 +244,7 @@ debug() {
 is_valid_name() {
 	local valid="^[a-zA-Z0-9\_\-]+$"
 	local invalid="^(start|stop|restart|version|server|jargroup|all|config|update|help|\-\-.*)$"
-	
+
 	if [[ "$1" =~ $valid ]]; then
 		if [[ "$1" =~ $invalid ]]; then
 			error_exit INVALID_ARGUMENT "Invalid name \"$1\": A name may not be any of the following reserved worlds \"start\", \"stop\", \"restart\", \"server\", \"version\", \"jargroup\", \"all\", \"config\", \"update\" or \"help\" or start with two dashes (--)."
@@ -265,37 +265,37 @@ get_latest_file() {
 
 	local best_time=0
 	local best_file=""
-	
+
 	while IFS= read -r -d $'\0' file; do
 		# Remove the path, leaving just the file name
 		local date_time="$(basename "$file" | awk -F '-' '{print $1 "-" $2 "-" $3 " " $4 ":" $5 ":" $6}')"
-		
+
 		# Get the time in seconds since 1970 from file name
 		local seconds="$(date -d "$date_time" "+%s" 2> /dev/null)"
-		
+
 		# If that is newer than the current best, override variables
 		if [[ "$seconds" -gt "$best_time" ]]; then
 			best_time="$seconds"
 			best_file="$file"
 		fi
 	done < <(find "$1" -maxdepth 1 -type f -print0)
-	
+
 	RETURN="$best_file"
 }
 
 # Gets the latest available version of Vanilla Minecraft.
 # RETURN: URL of Jar to download.
 get_latest_minecraft() {
-                    printf "Checking minecraft version JSON... "
-                    local versions_url="http://s3.amazonaws.com/Minecraft.Download/versions/versions.json"
-                    local versions_file="/tmp/minecraft_versions.json"
-                    as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate -O '$versions_file' '$versions_url'"
-                    local latest_version=$(as_user "$SETTINGS_USERNAME" "cat '$versions_file' | egrep '^[[:space:]]*\"release\"' | cut -d':' -f2 | egrep -o '[[:digit:].]*'")
-                    if [[ -n "$latest_version" ]]; then
-                        local jar_url="https://s3.amazonaws.com/Minecraft.Download/versions/$latest_version/minecraft_server.$latest_version.jar"
-                    fi
+	printf "Checking minecraft version JSON... "
+	local versions_url="http://s3.amazonaws.com/Minecraft.Download/versions/versions.json"
+	local versions_file="/tmp/minecraft_versions.json"
+	as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate -O '$versions_file' '$versions_url'"
+	local latest_version=$(as_user "$SETTINGS_USERNAME" "cat '$versions_file' | egrep '^[[:space:]]*\"release\"' | cut -d':' -f2 | egrep -o '[[:digit:].]*'")
+	if [[ -n "$latest_version" ]]; then
+		local jar_url="https://s3.amazonaws.com/Minecraft.Download/versions/$latest_version/minecraft_server.$latest_version.jar"
+	fi
 
-		    return $jar_url
+	return $jar_url
 }
 
 # Gets the latest MCPC Plus build for a specified Minecraft version.
@@ -386,7 +386,7 @@ world_toggle_ramdisk_state() {
 		echo -n "Removing RAM flag from world \"${WORLD_NAME[$1]}\"... "
 		as_user "${SERVER_USERNAME[$sid]}" "rm -f \"${WORLD_FLAG_INRAM[$1]}\""
 		echo "Done."
-		
+
 		echo -n "Removing world \"${WORLD_NAME[$1]}\" from RAM... "
 		as_user "${SERVER_USERNAME[$sid]}" "rm -r \"${WORLD_RAMDISK_PATH[$1]}\""
 		echo "Done."
@@ -394,7 +394,7 @@ world_toggle_ramdisk_state() {
 		echo -n "Adding RAM flag to world \"${WORLD_NAME[$1]}\"... "
 		as_user "${SERVER_USERNAME[$sid]}" "touch \"${WORLD_FLAG_INRAM[$1]}\""
 		echo "Done."
-		
+
 		echo -n "Copying world to RAM... "
 		world_to_ram "$1"
 		echo "Done."
@@ -409,7 +409,7 @@ world_backup() {
 	world_property "$1" BACKUP_PATH
 
 	echo -n "Backing up world \"${WORLD_NAME[$1]}\"... "
-	
+
 	file_name="$(date "+%F-%H-%M-%S").zip"
 	local server_id="${WORLD_SERVER_ID[$1]}"
 	local containing_dir="$(dirname "${WORLD_PATH[$1]}")"
@@ -587,7 +587,7 @@ server_get_id() {
 			return 0
 		fi
 	done
-	
+
 	error_exit NAME_NOT_FOUND "Could not find id for server name \"$1\"."
 }
 
@@ -604,7 +604,7 @@ server_world_get_id() {
 
 		local start="${SERVER_WORLD_OFFSET[$1]}"
 		local max="$(( $start + ${SERVER_NUM_WORLDS[$1]} ))"
-	
+
 		# For each of the servers worlds:
 		for ((i=$start; i<$max; i++)); do
 			if [[ "${WORLD_NAME[$i]}" == "$2" ]]; then
@@ -613,7 +613,7 @@ server_world_get_id() {
 			fi
 		done
 	fi
-	
+
 	error_exit NAME_NOT_FOUND "Could not find id for world \"$2\" for server \"${SERVER_NAME[$1]}\"."
 }
 
@@ -639,7 +639,7 @@ server_ensure_jar() {
 	if [ -f "${SERVER_JAR_PATH[$1]}" ]; then
 		return 0
 	fi
-	
+
 	error_exit FILE_NOT_FOUND "Could not find jar for server \"${SERVER_NAME[$1]}\": Expected \"${SERVER_JAR_PATH[$1]}\"."
 }
 
@@ -682,7 +682,7 @@ server_ensure_links() {
 	local start="${SERVER_WORLD_OFFSET[$1]}"
 	local max="$(( $start + ${SERVER_NUM_WORLDS[$1]} ))"
 	local output="false"
-	
+
 	for ((i=$start; i<$max; i++)); do
 		world_property "$i" STATUS
 		world_property "$i" LINK
@@ -694,18 +694,18 @@ server_ensure_links() {
 		fi
 
 		world_property "$i" INRAM
-		
+
 		# -L checks for the path being a link rather than a file
 		# ! -a, since it is within double square brackets means: the negation of
 		# the existence of the file. In other words: true if does not exist
 		if [[ -L "${WORLD_LINK[$i]}" || ! -a "${WORLD_LINK[$i]}" ]]; then
 			# If there is a symbolic link in the server direcotry to this world,
 			# or there is not a directory in the server directory containing this world.
-			
+
 			# Get the original file path the symbolic link is pointing to
 			# If there is no link, link_target will contain nothing
 			link_target="$(readlink "${WORLD_LINK[$i]}")"
-			
+
 			if "${WORLD_INRAM[$i]}"; then
 				# If this world is marked as loaded into RAM
 
@@ -740,7 +740,7 @@ server_ensure_links() {
 			output="true"
 		fi
 	done
-	
+
 	if [[ "$output" == "true" ]]; then
 		echo -e "\nDone."
 	else
@@ -758,7 +758,7 @@ server_worlds_to_ram() {
 		echo -n "Synchronising flagged worlds on disk to RAM... "
 		local i="${SERVER_WORLD_OFFSET[$1]}"
 		local max="$(( $i + ${SERVER_NUM_WORLDS[$1]} ))"
-		
+
 		# For each of the servers worlds:
 		while [[ "$i" -lt "$max" ]]; do
 			world_property "$i" INRAM
@@ -767,7 +767,7 @@ server_worlds_to_ram() {
 			if "${WORLD_INRAM[$i]}" && [ -L "${WORLD_LINK[$i]}" ]; then
 				world_to_ram "$i"
 			fi
-			
+
 			i="$(( $i + 1 ))"
 		done
 		echo "Done."
@@ -783,14 +783,14 @@ server_worlds_to_disk() {
 		echo -n "Synchronising worlds in RAM to disk... "
 		local i="${SERVER_WORLD_OFFSET[$1]}"
 		local max="$(( $i + ${SERVER_NUM_WORLDS[$1]} ))"
-		
+
 		# For each of the servers worlds:
 		while [[ "$i" -lt "$max" ]]; do
 			world_property "$i" RAMDISK_PATH
 			if [ -d "${WORLD_RAMDISK_PATH[$i]}" ]; then
 				world_to_disk "$i"
 			fi
-			
+
 			i="$(( $i + 1 ))"
 		done
 		echo "Done."
@@ -957,7 +957,7 @@ server_pid() {
 # $1: The ID of the server to wait for
 server_wait_for_stop() {
 	local pid="$(server_pid "$1")"
-	
+
 	# if the process is still running, wait for it to stop
 	if [ ! -z "$pid" ]; then
 		while ps -p "$pid" > /dev/null; do
@@ -1007,7 +1007,7 @@ jargroup_list() {
 	if [[ -d "${SETTINGS_JAR_STORAGE_PATH}" ]]; then
 		local jargroup_name
 		local jar_name
-	
+
 		while IFS= read -r -d $'\0' jargroup_path; do
 			jargroup_name="$(basename "${jargroup_path}")"
 			echo "$jargroup_name"
@@ -1032,19 +1032,19 @@ jargroup_create() {
 
 		if [[ ! -d "$SETTINGS_JAR_STORAGE_PATH/$1" ]]; then
 			echo -n "Creating jar group... "
-			
+
 			local error="$(as_user_stderr "$SETTINGS_USERNAME" "mkdir -p \"$SETTINGS_JAR_STORAGE_PATH/$1\"")"
 			if [[ "$error" != "" ]]; then
 				echo "Failed."
 				error_exit FILE_NOT_FOUND "$error"
 			fi
-			
+
 			error="$(as_user "$SETTINGS_USERNAME" "echo \"$2\" > \"$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_TARGET\"")"
 			if [[ "$error" != "" ]]; then
 				echo "Failed."
 				error_exit FILE_NOT_FOUND "$error"
 			fi
-			
+
 			echo "Done."
 		else
 			error_exit DUPLICATE_NAME "A jar group with that name already exists."
@@ -1088,56 +1088,56 @@ jargroup_getlatest() {
 		if [[ -d "$SETTINGS_JAR_STORAGE_PATH/$1" ]]; then
 			if [[ -f "$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_TARGET" ]]; then
 				printf "Downloading latest version... "
-			
+
 				# Try and make 
 				local error="$(as_user_stderr "$SETTINGS_USERNAME" "mkdir -p '$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR'")"
 				if [[ "$error" != "" ]]; then
 					echo "Failed."
 					error_exit FILE_NOT_FOUND "$error"
 				fi
-			
-                                # test wget for --trust-server-names option
-                                local wget_opts="--trust-server-names"
-                                wget $wget_opts >/dev/null 2>&1
-                                if [[ $? != 1 ]]; then
-                                    wget_opts=""
-                                fi
 
-                local target="$(as_user "$SETTINGS_USERNAME" "cat $SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_TARGET")"
-                # If target is 'minecraft' check JSON version file for correct filename
-                if [[ "$target" == "minecraft" ]]; then
-			jar_url=get_latest_minecraft
-		fi
+				# test wget for --trust-server-names option
+				local wget_opts="--trust-server-names"
+				wget $wget_opts >/dev/null 2>&1
+				if [[ $? != 1 ]]; then
+					wget_opts=""
+				fi
 
-                if [[ -n "$jar_url" ]]; then
-				    as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate --directory-prefix='$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR' '$jar_url'"
-                else
-				    as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate --input-file='$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_TARGET' --directory-prefix='$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR'"
-                fi
+				local target="$(as_user "$SETTINGS_USERNAME" "cat $SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_TARGET")"
+				# If target is 'minecraft' check JSON version file for correct filename
+				if [[ "$target" == "minecraft" ]]; then
+					jar_url=get_latest_minecraft
+				fi
+
+				if [[ -n "$jar_url" ]]; then
+					as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate --directory-prefix='$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR' '$jar_url'"
+				else
+					as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate --input-file='$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_TARGET' --directory-prefix='$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR'"
+				fi
 				echo "Done."
-			
+
 				local num_files="$(as_user "$SETTINGS_USERNAME" "ls -1 '$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR' | wc -l")"
-			
+
 				if [[ "$num_files" == 1 ]]; then
 					# There was 1 file downloaded
-				
+
 					local file_name="$(ls -1 "$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR")"
 					local new_name="$(date +%F-%H-%M-%S)-$file_name"
 
 					get_latest_file "$SETTINGS_JAR_STORAGE_PATH/$1"
 					local most_recent_jar="$RETURN"
-					
-				
+
+
 					if [[ ! -f "$most_recent_jar" ]] || ! diff "$most_recent_jar" "$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR/$file_name" > /dev/null; then
 						# There is not a previous version to do a comparison against, or
 						# The previous version is different:
 						# Add it to the group
-					
+
 						[[ -f "$most_recent_jar" ]]
 						local was_previous="$?"
-					
+
 						as_user "$SETTINGS_USERNAME" "mv '$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR/$file_name' '$SETTINGS_JAR_STORAGE_PATH/$1/$new_name'"
-					
+
 						if [[ ! -z "$most_recent_jar" ]]; then
 							echo "Downloaded version was different to previous latest. Saved as \"$SETTINGS_JAR_STORAGE_PATH/$1/$new_name\"."
 						else
@@ -1146,7 +1146,7 @@ jargroup_getlatest() {
 					else
 						echo "Existing version \"$SETTINGS_JAR_STORAGE_PATH/$1/$new_name\" was already up to date."
 					fi
-				
+
 				elif [[ "$num_files" == 0 ]]; then
 					# No file was downloaded
 					echo "Failed. No files were downloaded."
@@ -1154,7 +1154,7 @@ jargroup_getlatest() {
 					# Multiple files were
 					echo "Error. URL downloads multiple files."
 				fi
-			
+
 				# Clean up the temp download folder
 				as_user "$SETTINGS_USERNAME" "rm -fr '$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR'"
 			else
@@ -1175,7 +1175,7 @@ jargroup_delete() {
 
 		if [[ -d "$SETTINGS_JAR_STORAGE_PATH/$1" ]]; then
 			printf "Are you sure you want to delete this jar group [y/N]: "
-		
+
 			read answer
 			if [[ "$answer" =~ ^y|Y|yes$ ]]; then
 				as_user "$SETTINGS_USERNAME" "rm -rf \"$SETTINGS_JAR_STORAGE_PATH/$1\""
@@ -1200,7 +1200,7 @@ jargroup_rename() {
 		if [[ -d "$SETTINGS_JAR_STORAGE_PATH/$1" ]]; then
 			# If the jar group name is valid,
 			# and there is no other jar group with the name $1
-		
+
 			if is_valid_name "$2"; then
 				if [[ -e "$SETTINGS_JAR_STORAGE_PATH/$2" ]]; then
 					error_exit DUPLICATE_NAME "Could not be renamed, there is already a jar group with the name \"$2\"."
@@ -1297,7 +1297,7 @@ server_create() {
 			NUM_SERVERS=$(($NUM_SERVERS+1))
 
 			# TODO: Dirty all server varibales, or don't allow further in script access
-			
+
 			# TODO: Handle server default setup stuff better than just using
 			#       the "minecraft" jar group. And make it configurable.
 			if [ -d "$SETTINGS_JAR_STORAGE_PATH/minecraft" ]; then
@@ -1348,7 +1348,7 @@ server_rename() {
 
 		if [ -d "$SETTINGS_SERVER_STORAGE_PATH/$1" ]; then
 			# If the server name is valid and exists
-			
+
 			server_get_id "$1"
 			local existing_id="$RETURN"
 
@@ -1391,7 +1391,7 @@ server_start() {
 		server_worlds_to_ram "$1"
 
 		local time_now="$(now)"
-		
+
 		printf "Starting server..."
 
 		# This is the important line! Let's start this server!
@@ -1399,7 +1399,7 @@ server_start() {
 
 		# Wait for the server to fully start
 		server_log_dots_for_lines "$1" "$time_now" "${SERVER_CONSOLE_EVENT_OUTPUT_START[$1]}" "${SERVER_CONSOLE_EVENT_TIMEOUT_START[$1]}"
-		
+
 		echo " Done."
 	fi
 }
@@ -1423,7 +1423,7 @@ server_save_off() {
 		echo -n "Disabling level saving... "
 		server_command "$1" SAVE_OFF
 		echo "Done."
-		
+
 		# Writes any in-memory data manged by the kernel to disk
 		sync
 	else
@@ -1452,24 +1452,24 @@ server_stop() {
 	if server_is_running "$1"; then
 		# Change the state of the script
 		STOP_COUNTDOWN[$1]="true"
-	
-	    server_eval "$1" "say ${SERVER_MESSAGE_STOP[$1]}"
-	    echo "Issued the warning \"${SERVER_MESSAGE_STOP[$1]}\" to players."
-	
+
+		server_eval "$1" "say ${SERVER_MESSAGE_STOP[$1]}"
+		echo "Issued the warning \"${SERVER_MESSAGE_STOP[$1]}\" to players."
+
 		echo -n "Shutting down... "
-	
+
 		for ((i="${SERVER_STOP_DELAY[$1]}"; i>0; i--)); do
 			tput sc # Save cursor position
 			echo -n "in $i seconds."
 			sleep 1
-		
+
 			tput rc # Restore cursor to position of last `sc'
 			tput el # Clear to end of line
 		done
-	
+
 		echo -e "Now."
 		server_stop_now "$1"
-   	else
+	else
 		echo "Server \"${SERVER_NAME[$1]}\" is not running."
 	fi
 }
@@ -1479,16 +1479,16 @@ server_stop() {
 server_stop_now() {
 	if server_is_running "$1"; then
 		server_save_all "$1"
-		
+
 		echo -n "Stopping the server... "
-		
+
 		server_eval "$1" "stop"
 		STOP_COUNTDOWN[$1]="false"
 		RESTART_COUNTDOWN[$1]="false"
 		server_wait_for_stop "$1"
-		
+
 		echo "Done."
-		
+
 		# Synchronise all worlds in RAM to disk
 		server_worlds_to_disk "$1"
 	else
@@ -1506,26 +1506,26 @@ server_restart() {
 	if server_is_running "$1"; then
 		# Change the state of the script
 		RESTART_COUNTDOWN[$1]="true"
-	
-	    server_eval "$1" "say ${SERVER_MESSAGE_RESTART[$1]}"
-	    echo "Issued the warning \"${SERVER_MESSAGE_RESTART[$1]}\" to players."
-	
+
+		server_eval "$1" "say ${SERVER_MESSAGE_RESTART[$1]}"
+		echo "Issued the warning \"${SERVER_MESSAGE_RESTART[$1]}\" to players."
+
 		echo -n "Restarting... "
-	
+
 		for ((i="${SERVER_RESTART_DELAY[$1]}"; i>0; i--)); do
 			tput sc # Save cursor position
 			echo -n "in $i seconds."
 			sleep 1
-		
+
 			tput rc # Restore cursor to position of last `sc'
 			tput el # Clear to end of line
 		done
-	
+
 		echo -e "Now."
-		
+
 		server_stop_now "$1"
 	fi
-	
+
 	server_start "$1"
 }
 
@@ -1536,7 +1536,7 @@ server_restart_now() {
 	if server_is_running "$1"; then
 		server_stop_now "$1"
 	fi
-	
+
 	server_start "$1"
 }
 
@@ -1550,7 +1550,7 @@ server_worlds_list() {
 
 	local i="${SERVER_WORLD_OFFSET[$1]}"
 	local max="$(( $i + ${SERVER_NUM_WORLDS[$1]} ))"
-	
+
 	# For each of the servers worlds:
 	for ((i=$i; i<$max; i++)); do
 		world_property "$i" INRAM
@@ -1598,11 +1598,11 @@ server_log_roll() {
 	fi
 
 	echo -n "Rolling server logs... "
-	
+
 	if [ -e "${SERVER_LOG_PATH[$1]}" ]; then
 		file_name="${SERVER_NAME[$1]}-$(date +%F-%H-%M-%S).log"
 		as_user "${SERVER_USERNAME[$1]}" "mkdir -p \"${SERVER_LOG_ARCHIVE_PATH[$1]}\" && cp \"${SERVER_LOG_PATH[$1]}\" \"${SERVER_LOG_ARCHIVE_PATH[$1]}/${file_name}\" && gzip \"${SERVER_LOG_ARCHIVE_PATH[$1]}/${file_name}\""
-		
+
 		if [ -e "${SERVER_LOG_ARCHIVE_PATH[$1]}/${file_name}.gz" ]; then
 			as_user "${SERVER_USERNAME[$1]}" "cp \"/dev/null\" \"${SERVER_LOG_PATH[$1]}\""
 			as_user "${SERVER_USERNAME[$1]}" "echo \"Previous logs can be found at \\\"${SERVER_LOG_ARCHIVE_PATH[$1]}\\\"\" > \"${SERVER_LOG_PATH[$1]}\""
@@ -1611,7 +1611,7 @@ server_log_roll() {
 			error_exit LOGS_NOT_ROLLED "Logs were not rolled."
 		fi
 	fi
-	
+
 	echo "Done."
 }
 
@@ -1624,17 +1624,17 @@ server_backup() {
 	server_property "$1" USERNAME
 
 	echo -n "Backing up the entire server directory... "
-	
+
 	zip_flags="-rq"
 	# Add the "y" flag if symbolic links should not be followed
 	if [ "${SERVER_COMPLETE_BACKUP_FOLLOW_SYMLINKS[$1]}" != "true" ]; then
 		zip_flags="${zip_flags}y"
 	fi
-	
+
 	# Zip up the server directory
 	file_name="${SERVER_BACKUP_PATH[$1]}/$(date "+%F-%H-%M-%S").zip"
 	as_user "${SERVER_USERNAME[$1]}" "mkdir -p \"${SERVER_BACKUP_PATH[$1]}\" && cd \"$SETTINGS_SERVER_STORAGE_PATH\" && zip ${zip_flags} \"${file_name}\" \"${SERVER_NAME[$1]}\""
-	
+
 	echo "Done."
 }
 
@@ -1648,10 +1648,10 @@ server_set_jar() {
 	server_property "$1" USERNAME
 
 	if [ -d "$SETTINGS_JAR_STORAGE_PATH/$2" ]; then
-		
+
 		if [ -z "$3" ]; then
 			# If a specific jar file is not mentioned
-			
+
 			# Download the latest version
 			jargroup_getlatest "$2"
 			get_latest_file "$SETTINGS_JAR_STORAGE_PATH/$2"
@@ -1659,12 +1659,12 @@ server_set_jar() {
 		else
 			# If a specific jar IS mentioned use that
 			local jar="$SETTINGS_JAR_STORAGE_PATH/$2/$3"
-			
+
 			if [[ ! -e "$jar" ]]; then
 				error_exit NAME_NOT_FOUND "There is no jar named \"$3\" in jargroup \"$2\"."
 			fi
 		fi
-		
+
 		if [[ ! -z "$jar" ]]; then
 			as_user "${SERVER_USERNAME[$1]}" "ln -sf \"$jar\" \"${SERVER_JAR_PATH[$1]}\""
 			echo "Server \"${SERVER_NAME[$1]}\" is now using \"$jar\"."
@@ -1871,10 +1871,10 @@ manager_stop_all_servers() {
 	local was_running
 	# False if no servers were running at all
 	local any_running="false"
-	
+
 	# For all running servers issue the stop warning
 	local max_countdown=0
-	
+
 	for ((server=0; server<${NUM_SERVERS}; server++)); do
 		if server_is_running "$server"; then
 			any_running="true"
@@ -1888,45 +1888,45 @@ manager_stop_all_servers() {
 			if [[ "${SERVER_STOP_DELAY[$server]}" -gt "$max_countdown" ]]; then
 				max_countdown="${SERVER_STOP_DELAY[$server]}"
 			fi
-			
+
 			# Send a warning message to the server
 			case "$1" in
 				stop) server_eval "$server" "say ${SERVER_MESSAGE_STOP[$server]}";;
-				restart) server_eval "$server" "say ${SERVER_MESSAGE_RESTART[$server]}";;
-			esac
-			
-			# Send message to stdout
-			echo "Server \"${SERVER_NAME[$server]}\" was running, now stopping:"
-			
-			case "$1" in
-				stop) echo "    Issued the warning \"${SERVER_MESSAGE_STOP[$server]}\" to players.";;
-				restart) echo "    Issued the warning \"${SERVER_MESSAGE_RESTART[$server]}\" to players.";;
-			esac
-			
-			case "${SERVER_STOP_DELAY[$server]}" in
-				0) echo "    Stopping without delay.";;
-				1) echo "    Stopping after 1 second.";;
-				*) echo "    Stopping after ${SERVER_STOP_DELAY[$server]} seconds.";;
+			restart) server_eval "$server" "say ${SERVER_MESSAGE_RESTART[$server]}";;
+		esac
+
+		# Send message to stdout
+		echo "Server \"${SERVER_NAME[$server]}\" was running, now stopping:"
+
+		case "$1" in
+			stop) echo "    Issued the warning \"${SERVER_MESSAGE_STOP[$server]}\" to players.";;
+		restart) echo "    Issued the warning \"${SERVER_MESSAGE_RESTART[$server]}\" to players.";;
+	esac
+
+	case "${SERVER_STOP_DELAY[$server]}" in
+		0) echo "    Stopping without delay.";;
+	1) echo "    Stopping after 1 second.";;
+*) echo "    Stopping after ${SERVER_STOP_DELAY[$server]} seconds.";;
 			esac
 		else
 			echo "Server \"${SERVER_NAME[$server]}\" was NOT running."
 			was_running[$server]="false"
 		fi
 	done
-	
+
 	if "$any_running"; then
 		# Wait for the maximum possible delay, stopping servers
 		# at the correct times
 		echo -n "All servers will have been issued the stop command... "
 		for ((tick="${max_countdown}"; tick>=0; tick--)); do
 			tput sc # Save cursor position
-		
+
 			if [[ "$tick" -le 1 ]]; then
 				echo -n "in $tick second."
 			else
 				echo -n "in $tick seconds."
 			fi
-		
+
 			# Each second check all servers, to see if it's their time to
 			# stop. If so issue the stop command, and don't wait.
 			for ((server=0; server<${NUM_SERVERS}; server++)); do
@@ -1938,7 +1938,7 @@ manager_stop_all_servers() {
 					fi
 				fi
 			done
-		
+
 			if [[ "$tick" > 0 ]]; then
 				sleep 1
 			fi
@@ -1946,10 +1946,10 @@ manager_stop_all_servers() {
 			tput rc # Restore cursor to position of last `sc'
 			tput el # Clear to end of line
 		done
-	
+
 		# Start a new line
 		echo "Now."
-	
+
 		# Finally check all servers have stopped
 		for ((server=0; server<${NUM_SERVERS}; server++)); do
 			if "${was_running[$server]}"; then
@@ -1969,7 +1969,7 @@ manager_stop_all_servers_now() {
 	local was_running
 	# False if no servers were running at all
 	local any_running="false"
-	
+
 	# Stop all servers at the same time
 	for ((server=0; server<${NUM_SERVERS}; server++)); do
 		if server_is_running "$server"; then
@@ -1982,7 +1982,7 @@ manager_stop_all_servers_now() {
 			was_running[$server]="false"
 		fi
 	done
-	
+
 	if "$any_running"; then
 		# Ensure all the servers have stopped
 		for ((server=0; server<${NUM_SERVERS}; server++)); do
@@ -2079,7 +2079,7 @@ command_stop_now() {
 command_restart() {
 	echo "Stopping servers:"
 	command_stop
-	
+
 	echo "Starting servers:"
 	command_start
 }
@@ -2088,7 +2088,7 @@ command_restart() {
 command_restart_now() {
 	echo "Stopping servers:"
 	command_stop_now
-	
+
 	echo "Starting servers:"
 	command_start
 }
@@ -2915,7 +2915,7 @@ command_server_operator_add() {
 		echo -n "The following players are now operators: "
 		echo -n "$2"
 		for player in "${@:3}"; do
-		 	echo -n ", $player"
+			echo -n ", $player"
 		done
 		echo "."
 	else
@@ -2947,7 +2947,7 @@ command_server_operator_remove() {
 		echo -n "The following players are no longer operators: "
 		echo -n "$2"
 		for player in "${@:3}"; do
-		 	echo -n ", $player"
+			echo -n ", $player"
 		done
 		echo "."
 	else
@@ -3237,7 +3237,7 @@ register_settings() {
 	register_setting JARGROUP_TARGET "target.txt"
 	register_setting JARGROUP_DOWNLOAD_DIR "downloads"
 	register_setting SERVER_PROPERTIES "server.properties"
-	
+
 	register_server_setting USERNAME "minecraft"
 	register_server_setting SCREEN_NAME "msm-{SERVER_NAME}"
 	register_server_setting VERSION "unknown"
@@ -3293,9 +3293,9 @@ register_command() {
 	# Here we build a regular expression which will match any user input
 	# that could be passed to the given handler function. It is derrived
 	# automatically from the given command signature.
-	
+
 	local regex="^"
-	
+
 	# Iterate over each element in the command signature
 	for word in $1; do
 		# Variables are denoted by angle brackets (e.g. "<variable>") and can
@@ -3314,7 +3314,7 @@ register_command() {
 			esac
 			continue
 		fi
-		
+
 		# Sometimes different worlds may be used to call the same command, in
 		# these cases, the different words may be written contiguously,
 		# separated by the pipe character (i.e. "|") and any of the options
@@ -3323,20 +3323,20 @@ register_command() {
 			regex="${regex}($word) "
 			continue
 		fi
-		
+
 		# Anything else found in the command signature will be taken to mean
 		# a fixed string, which must be provided to match this command.
 		regex="${regex}$word "
 	done
-	
+
 	if [ ${#regex} -ge 1 ]; then
 		regex="${regex:0:${#regex}-1}\$"
-		
+
 		# Sets the global command varibales in order to register this command
 		COMMAND_SIGNATURE[$COMMAND_COUNT]="$1"
 		COMMAND_REGEX[$COMMAND_COUNT]="$regex"
 		COMMAND_HANDLER[$COMMAND_COUNT]="$2"
-		
+
 		COMMAND_COUNT=$(( $COMMAND_COUNT + 1 ))
 	else
 		error_exit FATAL_ERROR "Fatal error: Sorry about this, would you be so kind as to file a bug at http://git.io/2f_x-A and cite: \"Erroneous command regex '${regex}' for signature '${1}'\""
@@ -3381,7 +3381,7 @@ call_command() {
 				args[$arg_offset]="$1"
 				arg_offset="$(( $arg_offset + 1 ))"
 			}
-			
+
 			# The following loop builds a set of arguments to pass to the
 			# matched command handler function. Rather than passing all args
 			# given to the script, to the handler (which may contain constant
@@ -3398,192 +3398,192 @@ call_command() {
 					# The "<string>" token expects any type of string argument,
 					# accepting spaces, limited to one argument.
 					"<string>")
-						# Do no checks, just push the argument onto the stack
-						push_arg "${!word_offset}"
-						;;
-					
-					
+					# Do no checks, just push the argument onto the stack
+					push_arg "${!word_offset}"
+					;;
+
+
 					# The "<strings>" token must only be placed at the end of a
 					# commadn signature, and allows an arbitrary amount of
 					# arguments to be passed to the command handler function.
 					"<strings>")
-						# Put all remaining user input onto the argument stack
-						for input_arg in "${@:$word_offset}"; do
-							push_arg "$input_arg"
-						done
-						# Break from analysing the rest of the input
-						break
-						;;
+					# Put all remaining user input onto the argument stack
+					for input_arg in "${@:$word_offset}"; do
+						push_arg "$input_arg"
+					done
+					# Break from analysing the rest of the input
+					break
+					;;
 
 					# The "<flags>" token expects any string without spaces that
 					# starts with one or two dashes: "--noinput -q" are examples.
 					# All flags are consumed and stored in the COMMAND_FLAGS
 					# variable.
 					"<flags>")
-						local num_flags=0
-						for potential_flag in "${@:$word_offset}"; do
-							if [[ "$potential_flag" =~ ^(\-\-|\-)[^\ ]+$ ]]; then
-								COMMAND_FLAGS="${COMMAND_FLAGS}${potential_flag};"
-								num_flags=$(( $num_flags + 1 ))
-							else
-								# Stop processing words, since all flags must be
-								# contiguous
-								break
-							fi
-						done
-
-						# We may have consumed more than one "word", the outer
-						# loop expects us to only take one, so must correct for
-						# this if we have take two words or more
-						if [[ "$num_flags" -ge 2 ]]; then
-							word_offset=$(( $word_offset + $num_flags - 1 ))
+					local num_flags=0
+					for potential_flag in "${@:$word_offset}"; do
+						if [[ "$potential_flag" =~ ^(\-\-|\-)[^\ ]+$ ]]; then
+							COMMAND_FLAGS="${COMMAND_FLAGS}${potential_flag};"
+							num_flags=$(( $num_flags + 1 ))
+						else
+							# Stop processing words, since all flags must be
+							# contiguous
+							break
 						fi
-						;;
-					
-					
+					done
+
+					# We may have consumed more than one "word", the outer
+					# loop expects us to only take one, so must correct for
+					# this if we have take two words or more
+					if [[ "$num_flags" -ge 2 ]]; then
+						word_offset=$(( $word_offset + $num_flags - 1 ))
+					fi
+					;;
+
+
 					# The "<name>" token is similar to "<string>" but adds an
 					# extra assurance that the string is a valid name, as used
 					# for creating servers and other things.
 					"<name>")
-						# Check the argument is a valid name and then add push it onto the argument stack
-						local specified_name="${!word_offset}"
+					# Check the argument is a valid name and then add push it onto the argument stack
+					local specified_name="${!word_offset}"
 
-						if is_valid_name "$specified_name"; then
-							push_arg "$specified_name"
-						fi
-						;;
-					
-					
+					if is_valid_name "$specified_name"; then
+						push_arg "$specified_name"
+					fi
+					;;
+
+
 					# The "<name:server>" token improves on "<name>" by also
 					# checking that the server exists, and passing the argument
 					# on as the server id, instead of the server name to
 					# command handler functions.
 					"<name:server>")
-						local specified_name="${!word_offset}"
-						if [[ "$specified_name" == "all" ]]; then
-							# Do for all servers
-							sid="server:all"
-						else
-							if is_valid_name "$specified_name"; then
-								if [ -d "$SETTINGS_SERVER_STORAGE_PATH/$specified_name" ]; then
-									server_get_id "$specified_name"
-									sid="$RETURN"
-								fi
-							fi
-
-							if [[ "$sid" -eq "-1" ]]; then
-								error_exit NAME_NOT_FOUND "There is no server with the name \"$specified_name\"."
+					local specified_name="${!word_offset}"
+					if [[ "$specified_name" == "all" ]]; then
+						# Do for all servers
+						sid="server:all"
+					else
+						if is_valid_name "$specified_name"; then
+							if [ -d "$SETTINGS_SERVER_STORAGE_PATH/$specified_name" ]; then
+								server_get_id "$specified_name"
+								sid="$RETURN"
 							fi
 						fi
 
-						push_arg "$sid"
-						;;
-						
-					
+						if [[ "$sid" -eq "-1" ]]; then
+							error_exit NAME_NOT_FOUND "There is no server with the name \"$specified_name\"."
+						fi
+					fi
+
+					push_arg "$sid"
+					;;
+
+
 					# The "<name:world>" token also improves upon "<name>" by
 					# ensuring that the world actually exists, and passes the
 					# argument on to command handlers as the world ID, rather
 					# than the original world name input by the user.
 					"<name:world>")
-						local specified_name="${!word_offset}"
+					local specified_name="${!word_offset}"
 
-						if [[ "$sid" -eq "-1" ]]; then
-							# Server id not set yet
-							error_exit 1 "Ill-defined command $*. Please file an issue by opening the following link: https://github.com/marcuswhybrow/minecraft-server-manager/issues"
+					if [[ "$sid" -eq "-1" ]]; then
+						# Server id not set yet
+						error_exit 1 "Ill-defined command $*. Please file an issue by opening the following link: https://github.com/marcuswhybrow/minecraft-server-manager/issues"
+					fi
+
+					if [[ "$sid" -eq "-2" ]]; then
+						if [[ "$specified_name" == "all" ]]; then
+							wid="world:all"
+						else
+							error_exit INVALID_ARGUMENT "When specifying \"all\" servers, \"all\" worlds must be specified also."
 						fi
+					fi
 
-						if [[ "$sid" -eq "-2" ]]; then
-							if [[ "$specified_name" == "all" ]]; then
-								wid="world:all"
-							else
-								error_exit INVALID_ARGUMENT "When specifying \"all\" servers, \"all\" worlds must be specified also."
+					if [[ "$sid" -ge "0" ]]; then
+						if is_valid_name "$specified_name"; then
+							server_property "$sid" WORLD_STORAGE_PATH
+							server_property "$sid" WORLD_STORAGE_INACTIVE_PATH
+
+							if [ -d "${SERVER_WORLD_STORAGE_PATH[$sid]}/$specified_name" ] || [ -d "${SERVER_WORLD_STORAGE_INACTIVE_PATH[$sid]}/$specified_name" ]; then
+								server_world_get_id "$sid" "$specified_name"
+								wid="$RETURN"
 							fi
 						fi
 
-						if [[ "$sid" -ge "0" ]]; then
-							if is_valid_name "$specified_name"; then
-								server_property "$sid" WORLD_STORAGE_PATH
-								server_property "$sid" WORLD_STORAGE_INACTIVE_PATH
-
-								if [ -d "${SERVER_WORLD_STORAGE_PATH[$sid]}/$specified_name" ] || [ -d "${SERVER_WORLD_STORAGE_INACTIVE_PATH[$sid]}/$specified_name" ]; then
-									server_world_get_id "$sid" "$specified_name"
-									wid="$RETURN"
-								fi
-							fi
-
-							if [[ "$wid" -eq "-1" ]]; then
-								error_exit NAME_NOT_FOUND "There is no world with the name \"$specified_name\"."
-							fi
-
-							push_arg "$wid"
+						if [[ "$wid" -eq "-1" ]]; then
+							error_exit NAME_NOT_FOUND "There is no world with the name \"$specified_name\"."
 						fi
-						;;
-				esac
 
-				word_offset=$(( $word_offset + 1 ))
+						push_arg "$wid"
+					fi
+					;;
+			esac
+
+			word_offset=$(( $word_offset + 1 ))
+		done
+
+		# The argument list for the call to the command handler has been
+		# built. But there are several ways to call a handler. Either just
+		# once, or multiple times based upon if multiple servers or worlds
+		# were specified.
+
+		# This code block calls the handler for all possible servers and
+		# all possible worlds.
+		if [[ "$sid" == "server:all" ]] && [[ "$wid" == "world:all" ]]; then
+			for ((j=0; j<$NUM_WORLDS; j++)); do
+				# Replace server and world id placeholders with actual id's
+				local replaced_args
+				for k in ${!args[@]}; do
+					replaced_args[$k]="${args[$k]//server:all/${WORLD_SERVER_ID[$j]}}"
+					replaced_args[$k]="${args[$k]//world:all/$j}"
+				done
+
+				# Call the function with the specific replaced args
+				${COMMAND_HANDLER[$command]} "${replaced_args[@]}"
 			done
 
-			# The argument list for the call to the command handler has been
-			# built. But there are several ways to call a handler. Either just
-			# once, or multiple times based upon if multiple servers or worlds
-			# were specified.
-
-			# This code block calls the handler for all possible servers and
-			# all possible worlds.
-			if [[ "$sid" == "server:all" ]] && [[ "$wid" == "world:all" ]]; then
-				for ((j=0; j<$NUM_WORLDS; j++)); do
-					# Replace server and world id placeholders with actual id's
-					local replaced_args
-					for k in ${!args[@]}; do
-						replaced_args[$k]="${args[$k]//server:all/${WORLD_SERVER_ID[$j]}}"
-						replaced_args[$k]="${args[$k]//world:all/$j}"
-					done
-					
-					# Call the function with the specific replaced args
-					${COMMAND_HANDLER[$command]} "${replaced_args[@]}"
-				done
-				
-				# Prevent the default singular call later on.
-				unset COMMAND_FLAGS; return
-			fi
-			
-			# This calls the handler for all possible servers, and preserves 
-			# all other arguments.
-			if [[ "$sid" == "server:all" ]]; then
-				for ((j=0; j<$NUM_SERVERS; j++)); do
-					local replaced_args
-					for k in ${!args[@]}; do
-						replaced_args[$k]="${args[$k]//server\:all/$j}"
-					done
-					
-					${COMMAND_HANDLER[$command]} "${replaced_args[@]}"
-				done
-				
-				unset COMMAND_FLAGS; return
-			fi
-			
-			# This calls the handlers for all possible worlds for a specific
-			# server.
-			if [[ "$sid" != "server:all" ]] && [[ "$wid" == "world:all" ]]; then
-				for ((j=${SERVER_WORLD_OFFSET[$sid]}; j<${SERVER_NUM_WORLDS[$sid]}; j++)); do
-					local replaced_args
-					for k in ${!args[@]}; do
-						replaced_args[$k]="${args[$k]//world:all/$j}"
-					done
-					
-					${COMMAND_HANDLER[$command]} "${replaced_args[@]}"
-				done
-				
-				unset COMMAND_FLAGS; return
-			fi
-			
-			# Otherwise it's a simple single call of the handler.
-			${COMMAND_HANDLER[$command]} "${args[@]}"
+			# Prevent the default singular call later on.
 			unset COMMAND_FLAGS; return
 		fi
-	done
-	
-	echo "No such command. See $0 help"
+
+		# This calls the handler for all possible servers, and preserves 
+		# all other arguments.
+		if [[ "$sid" == "server:all" ]]; then
+			for ((j=0; j<$NUM_SERVERS; j++)); do
+				local replaced_args
+				for k in ${!args[@]}; do
+					replaced_args[$k]="${args[$k]//server\:all/$j}"
+				done
+
+				${COMMAND_HANDLER[$command]} "${replaced_args[@]}"
+			done
+
+			unset COMMAND_FLAGS; return
+		fi
+
+		# This calls the handlers for all possible worlds for a specific
+		# server.
+		if [[ "$sid" != "server:all" ]] && [[ "$wid" == "world:all" ]]; then
+			for ((j=${SERVER_WORLD_OFFSET[$sid]}; j<${SERVER_NUM_WORLDS[$sid]}; j++)); do
+				local replaced_args
+				for k in ${!args[@]}; do
+					replaced_args[$k]="${args[$k]//world:all/$j}"
+				done
+
+				${COMMAND_HANDLER[$command]} "${replaced_args[@]}"
+			done
+
+			unset COMMAND_FLAGS; return
+		fi
+
+		# Otherwise it's a simple single call of the handler.
+		${COMMAND_HANDLER[$command]} "${args[@]}"
+		unset COMMAND_FLAGS; return
+	fi
+done
+
+echo "No such command. See $0 help"
 }
 
 # Defines every MSM command.
@@ -3626,7 +3626,7 @@ register_commands() {
 	#
 	# Variables passed to handler functions are of course positional and there
 	# position matches the position of that element in the command signature.
-	
+
 	register_command "start" "command_start"
 	register_command "stop" "command_stop"
 	register_command "stop now" "command_stop_now"
@@ -3918,7 +3918,7 @@ interrupt() {
 			server_eval "$i" "say ${SERVER_MESSAGE_STOP_ABORT[$i]}"
 			echo "Server \"${SERVER_NAME[$i]}\" shutdown was aborted."
 		fi
-		
+
 		if [[ "${RESTART_COUNTDOWN[$i]}" == "true" ]] && server_is_running "$i"; then
 			if [[ "$exit_message" == "false" ]]; then
 				echo -e "\nInterrupted..."
@@ -4028,7 +4028,7 @@ main() {
 
 	# Trap interrupts to the script by calling the interrupt function
 	trap interrupt EXIT
-	
+
 	# This function call matches the user input to a registered command
 	# signature, and then calls that command's handler function with positional
 	# arguments containing any "variable" strings.

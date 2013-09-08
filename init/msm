@@ -283,6 +283,38 @@ get_latest_file() {
 	RETURN="$best_file"
 }
 
+# Gets the latest available version of Vanilla Minecraft.
+# RETURN: URL of Jar to download.
+get_latest_minecraft() {
+                    printf "Checking minecraft version JSON... "
+                    local versions_url="http://s3.amazonaws.com/Minecraft.Download/versions/versions.json"
+                    local versions_file="/tmp/minecraft_versions.json"
+                    as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate -O '$versions_file' '$versions_url'"
+                    local latest_version=$(as_user "$SETTINGS_USERNAME" "cat '$versions_file' | egrep '^[[:space:]]*\"release\"' | cut -d':' -f2 | egrep -o '[[:digit:].]*'")
+                    if [[ -n "$latest_version" ]]; then
+                        local jar_url="https://s3.amazonaws.com/Minecraft.Download/versions/$latest_version/minecraft_server.$latest_version.jar"
+                    fi
+
+		    return $jar_url
+}
+
+# Gets the latest MCPC Plus build for a specified Minecraft version.
+# $1: Version of Minecraft to get MCPC for. Valid versions are 1.5.2 and 1.6.2.
+# RETURN: Path to the latest Jar file.
+get_latest_mcpc() {
+	unset RETURN
+
+	if [ "$1" == "1.5.2" ]; then
+		url="http://ci.md-5.net/job/MCPC-Plus-Legacy/lastSuccessfulBuild/artifact/target/*zip*/target.zip"
+	elif [ "$1" == "1.6.2"]; then
+		url="http://ci.md-5.net/job/MCPC-Plus/lastSuccessfulBuild/artifact/*zip*/archive.zip"
+	else
+		error_exit INVALID_ARGUMENT "Invalid Minecraft version \"$1\": Accepted versions 1.5.2 or 1.6.2."
+	fi
+
+	wget $url -o
+}
+
 # Returns the current time as a UNIX timestamp (in seconds since 1970)
 now() {
 	date +%s
@@ -1071,19 +1103,12 @@ jargroup_getlatest() {
                                     wget_opts=""
                                 fi
 
-                # If target contains the word 'minecraft' check JSON version file for correct filename
                 local target="$(as_user "$SETTINGS_USERNAME" "cat $SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_TARGET")"
+                # If target is 'minecraft' check JSON version file for correct filename
                 if [[ "$target" == "minecraft" ]]; then
-                    printf "Checking minecraft version JSON... "
-                    local versions_url="http://s3.amazonaws.com/Minecraft.Download/versions/versions.json"
-                    local versions_file="/tmp/minecraft_versions.json"
-                    as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate -O '$versions_file' '$versions_url'"
-                    local latest_version=$(as_user "$SETTINGS_USERNAME" "cat '$versions_file' | egrep '^[[:space:]]*\"release\"' | cut -d':' -f2 | egrep -o '[[:digit:].]*'")
-                    if [[ -n "$latest_version" ]]; then
-                        local jar_url="https://s3.amazonaws.com/Minecraft.Download/versions/$latest_version/minecraft_server.$latest_version.jar"
+			jar_url=get_latest_minecraft
+		fi
 
-                    fi
-                fi
                 if [[ -n "$jar_url" ]]; then
 				    as_user "$SETTINGS_USERNAME" "wget --quiet $wget_opts --no-check-certificate --directory-prefix='$SETTINGS_JAR_STORAGE_PATH/$1/$SETTINGS_JARGROUP_DOWNLOAD_DIR' '$jar_url'"
                 else

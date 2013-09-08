@@ -568,6 +568,9 @@ test_listing_multiple_jargroups() {
 
 ### "msm jargroup getlatest" test
 
+test_getlatest_jargroups() {
+	quiet $TEST_SCRIPT jargroup getlatest 
+}
 
 # Perform tests
 source shunit2
